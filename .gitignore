@@ -14,7 +14,6 @@ dist-ssr
 
 .env
 
-package-lock.json
 bun.lock
 pnpm-lock.yaml
 
