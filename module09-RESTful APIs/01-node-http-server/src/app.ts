@@ -1,10 +1,10 @@
-import http, { type RequestListener } from "node:http";
+import http, { type RequestListener } from 'node:http';
 
 const users = [
-  { id: "1", name: "john doe", age: 20 },
+  { id: '1', name: 'john doe', age: 20 },
   {
-    id: "2",
-    name: "Jane Doe",
+    id: '2',
+    name: 'Jane Doe',
     age: 20,
   },
 ];
@@ -13,21 +13,21 @@ const requestHandler: RequestListener = (req, res) => {
   const { method, url } = req;
   const singleUserRegex = /^\/users\/[0-9a-zA-Z]+$/;
 
-  if (url === "/users") {
-    if (method === "GET") {
+  if (url === '/users') {
+    if (method === 'GET') {
       res.statusCode = 200;
-      res.setHeader("Content-Type", "application/json");
+      res.setHeader('Content-Type', 'application/json');
       return res.end(JSON.stringify(users));
     }
 
-    if (method == "POST") {
-      let body = "";
+    if (method == 'POST') {
+      let body = '';
 
-      req.on("data", (chuck) => {
+      req.on('data', (chuck) => {
         body += chuck;
       });
 
-      req.on("end", () => {
+      req.on('end', () => {
         const parsedBody = JSON.parse(body);
 
         // bulk creation [ {"name": "Mark Smith", age: 31} ]
@@ -43,7 +43,7 @@ const requestHandler: RequestListener = (req, res) => {
         }
 
         res.statusCode = 201;
-        res.setHeader("Content-Type", "application/json");
+        res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(users));
       });
       return;
@@ -51,39 +51,37 @@ const requestHandler: RequestListener = (req, res) => {
   }
 
   if (singleUserRegex.test(url!)) {
-    const id = url?.split("/")[2];
+    const id = url?.split('/')[2];
 
-    if (method === "GET") {
+    if (method === 'GET') {
       const user = users.find((u) => {
         return u.id === id;
       });
 
       if (!user) {
         res.statusCode = 404;
-        res.setHeader("Content-Type", "text/plain");
-        return res.end("User not found");
+        res.setHeader('Content-Type', 'text/plain');
+        return res.end('User not found');
       }
 
       res.statusCode = 200;
-      res.setHeader("Content-Type", "application/json");
+      res.setHeader('Content-Type', 'application/json');
       return res.end(JSON.stringify(user));
     }
 
-    if (method == "PUT") {
+    if (method == 'PUT') {
     }
 
-    if (method == "DELETE") {
+    if (method == 'DELETE') {
     }
   }
 
   res.statusCode = 405;
-  res.setHeader("Content-Type", "text/plain");
+  res.setHeader('Content-Type', 'text/plain');
   res.end(`${method} is not allowed`);
 };
 
 const server = http.createServer(requestHandler);
 
 const port = 3000;
-server.listen(port, () =>
-  console.log(`Server running at http://localhost:${port}/`),
-);
+server.listen(port, () => console.log(`Server running at http://localhost:${port}/`));
