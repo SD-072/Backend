@@ -1,5 +1,5 @@
 {
-  "name": "express_routers",
+  "name": "zod_express",
   "version": "1.0.0",
   "keywords": [],
   "author": "",
@@ -16,6 +16,10 @@
       "development": "./src/db/index.ts",
       "default": "./dist/db/index.js"
     },
+    "#middlewares": {
+      "development": "./src/middlewares/index.ts",
+      "default": "./dist/middlewares/index.js"
+    },
     "#models": {
       "development": "./src/models/index.ts",
       "default": "./dist/models/index.js"
@@ -23,6 +27,10 @@
     "#routes": {
       "development": "./src/routes/index.ts",
       "default": "./dist/routes/index.js"
+    },
+    "#schemas": {
+      "development": "./src/schemas/index.ts",
+      "default": "./dist/schemas/index.js"
     }
   },
   "scripts": {
@@ -35,7 +43,8 @@
   },
   "dependencies": {
     "express": "^5.2.1",
-    "mongoose": "^9.4.1"
+    "mongoose": "^9.4.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

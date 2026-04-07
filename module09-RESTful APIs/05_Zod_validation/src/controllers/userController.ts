@@ -1,25 +1,50 @@
 import type { RequestHandler } from 'express';
+import type z from 'zod';
 import { User } from '#models';
+import type { userInputSchema } from '#schemas';
 
-export const registerUser: RequestHandler = async (req, res) => {
-  const { firstName, lastName, email } = req.body;
+// # DTOs from the schema
+// * Inferring DTOs from Zod keeps runtime validation and TypeScript expectations connected.
+type UserInputDTO = z.infer<typeof userInputSchema>;
+type UserDTO = UserInputDTO;
 
-  const existingUser = await User.findOne({ email });
+export const registerUser: RequestHandler<
+  unknown, // 1. URL params
+  UserInputDTO, // 2. Request body
+  UserDTO // 3. Response body
+> = async (req, res) => {
+  const existingUser = await User.findOne({ email: req.body.email });
+
   if (existingUser) {
-    return res
-      .status(409)
-      .json({ message: 'User with this email already exists' });
+    // * The error handler turns thrown API errors into one consistent response format.
+    throw new Error('User with this email already exists', {
+      cause: { status: 409 },
+    });
   }
 
-  const user = await User.create({ firstName, lastName, email });
+  const user = await User.create(req.body);
   res.status(201).json(user);
 };
+
+// export const registerUser: RequestHandler = async (req, res) => {
+//   const { firstName, lastName, email } = req.body;
+
+//   const existingUser = await User.findOne({ email });
+//   if (existingUser) {
+//     throw new Error('User with this email already exists', {
+//       cause: { status: 409 },
+//     });
+//   }
+
+//   const user = await User.create({ firstName, lastName, email });
+//   res.status(201).json(user);
+// };
 
 export const getAllUsers: RequestHandler = async (req, res) => {
   const users = await User.find();
 
   if (!users.length) {
-    return res.status(404).json({ message: 'No users found' });
+    throw new Error('User not found', { cause: 404 });
   }
 
   res.json(users);
@@ -37,25 +62,46 @@ export const getUserById: RequestHandler = async (req, res) => {
   res.json(user);
 };
 
-export const updateUser: RequestHandler = async (req, res) => {
+export const updateUser: RequestHandler<
+  { id: string }, // here we need the ID from the URL
+  UserInputDTO, // 2. Request body
+  UserDTO // 3. Response body
+> = async (req, res) => {
   const { id } = req.params;
   const { firstName, lastName, email } = req.body;
 
-  const uptadedUser = await User.findByIdAndUpdate(
+  const updatedUser = await User.findByIdAndUpdate(
     id,
     { firstName, lastName, email },
-    { new: true, runValidators: true },
+    { new: true },
   );
 
-  if (!updateUser) {
-    return res.status(404).json({ message: 'User not found' });
+  if (!updatedUser) {
+    throw new Error('User not found', { cause: { status: 404 } });
   }
 
-  res.status(200).json({
-    message: 'User updated successfully',
-    user: uptadedUser,
-  });
+  res.status(200).json(updatedUser);
 };
+
+// export const updateUser: RequestHandler = async (req, res) => {
+//   const { id } = req.params;
+//   const { firstName, lastName, email } = req.body;
+
+//   const uptadedUser = await User.findByIdAndUpdate(
+//     id,
+//     { firstName, lastName, email },
+//     { new: true, runValidators: true },
+//   );
+
+//   if (!updateUser) {
+//     return res.status(404).json({ message: 'User not found' });
+//   }
+
+//   res.status(200).json({
+//     message: 'User updated successfully',
+//     user: uptadedUser,
+//   });
+// };
 
 export const deleteUser: RequestHandler = async (req, res) => {
   const { id } = req.params;

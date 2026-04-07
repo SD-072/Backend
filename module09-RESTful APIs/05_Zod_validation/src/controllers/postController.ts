@@ -1,12 +1,19 @@
 import type { RequestHandler } from 'express';
+import type z from 'zod';
 import { Post } from '#models';
+import type { postInputSchema, postUpdateSchema } from '#schemas';
 
-export const createPost: RequestHandler = async (req, res) => {
+// # Post DTOs from the schema
+// * The route middleware validates req.body before these controller handlers run.
+type PostInputDTO = z.infer<typeof postInputSchema>;
+type PostUpdateDTO = z.infer<typeof postUpdateSchema>;
+
+export const createPost: RequestHandler<
+  unknown,
+  unknown,
+  PostInputDTO
+> = async (req, res) => {
   const { title, content, author } = req.body;
-
-  if (!title || !content || !author) {
-    return res.status(400).json({ message: 'Missing required fields' });
-  }
 
   const newPost = await Post.create({ title, content, author });
   res.status(201).json(newPost);
@@ -37,15 +44,24 @@ export const getPostById: RequestHandler = async (req, res) => {
   res.status(200).json(post);
 };
 
-export const updatePost: RequestHandler = async (req, res) => {
+export const updatePost: RequestHandler<
+  { id: string },
+  unknown,
+  PostUpdateDTO
+> = async (req, res) => {
   const { id } = req.params;
-  const { title, content, author } = req.body;
+  const { title, content } = req.body;
 
+  // ! postUpdateSchema removes author, so updates cannot transfer ownership of a post.
   const updatedPost = await Post.findByIdAndUpdate(
     id,
-    { title, content, author },
+    { title, content },
     { new: true, runValidators: true },
   ).populate('author', 'firstName lastName');
+
+  if (!updatedPost) {
+    throw new Error('Post not found', { cause: { status: 404 } });
+  }
 
   res.status(200).json({
     message: 'post updated successfully',
