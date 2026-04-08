@@ -14,7 +14,7 @@ dist-ssr
 
 .env
 
-# usually you keep these in
+# usually you upload one of these
 bun.lock
 package-lock.json
 pnpm-lock.yaml
