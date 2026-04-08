@@ -8,42 +8,22 @@ import type { postInputSchema, postUpdateSchema } from '#schemas';
 type PostInputDTO = z.infer<typeof postInputSchema>;
 type PostUpdateDTO = z.infer<typeof postUpdateSchema>;
 
-// export const createPost: RequestHandler<
-//   unknown,
-//   unknown,
-//   PostInputDTO
-// > = async (req, res) => {
-//   const { title, content, author } = req.body;
-//   const image = req.file; // access the uploaded file
-
-//   if (!title || !content || !author) {
-//     throw new Error('Missing required fields', { cause: 400 });
-//   }
-
-//   const newPost = await Post.create({
-//     title,
-//     content,
-//     author,
-//     image_url: image?.path,
-//   });
-
-//   console.log('cloudinary upload result', image);
-//   res.status(201).json(newPost);
-// };
-
-export const createPost2: RequestHandler<
+// # Single File Upload
+// * `upload.single('image')` stores exactly one uploaded file on `req.file`.
+// * This example converts that single file into a one-item array only when saving, because the current schema stores `image_url` as `string[]`.
+export const createPostSingle: RequestHandler<
   unknown,
   unknown,
   PostInputDTO
 > = async (req, res) => {
   const { title, content, author } = req.body;
-  const files = (req.files as Express.Multer.File[]) || []; // access the uploaded files
+  const uploadedFile = req.file;
 
   if (!title || !content || !author) {
     throw new Error('Missing required fields', { cause: 400 });
   }
 
-  const imageUrls = files.map((file) => file.path);
+  const imageUrls = uploadedFile ? [uploadedFile.path] : [];
 
   const newPost = await Post.create({
     title,
@@ -52,7 +32,34 @@ export const createPost2: RequestHandler<
     image_url: imageUrls,
   });
 
-  console.log('cloudinary multiple upload results', files);
+  console.log('cloudinary single upload result', uploadedFile);
+  res.status(201).json(newPost);
+};
+
+// # Multiple File Upload
+// * `upload.array('image', 4)` collects all matching files into `req.files`, which lets one request create one post with many asset URLs.
+export const createPostMultiple: RequestHandler<
+  unknown,
+  unknown,
+  PostInputDTO
+> = async (req, res) => {
+  const { title, content, author } = req.body;
+  const uploadedFiles = (req.files as Express.Multer.File[]) || [];
+
+  if (!title || !content || !author) {
+    throw new Error('Missing required fields', { cause: 400 });
+  }
+
+  const imageUrls = uploadedFiles.map((file) => file.path);
+
+  const newPost = await Post.create({
+    title,
+    content,
+    author,
+    image_url: imageUrls,
+  });
+
+  console.log('cloudinary multiple upload results', uploadedFiles);
   res.status(201).json(newPost);
 };
 

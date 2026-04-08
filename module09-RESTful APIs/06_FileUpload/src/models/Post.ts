@@ -19,7 +19,10 @@ const postSchema = new Schema(
     },
     image_url: {
       // type: String, // upload a single file
-      type: [String], // upload multiple files
+      // # Uploaded Asset URLs
+      // * One consistent array shape keeps the single-file and multi-file examples compatible with the same schema.
+      type: [String],
+      default: [],
     },
   },
   { timestamps: true },

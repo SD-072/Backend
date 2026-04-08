@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
-  createPost2,
+  createPostMultiple,
+  createPostSingle,
   deletePost,
   getAllPosts,
   getPostById,
@@ -12,17 +13,23 @@ import { postInputSchema, postUpdateSchema } from '#schemas';
 const postRoutes = Router();
 
 postRoutes.get('/', getAllPosts);
-// postRoutes.post(
-//   '/',
-//   upload.single('image'), // -> returns `req.file`
-//   validateBodyZod(postInputSchema),
-//   createPost,
-// );
+
+// # Single Upload Route
+// * `upload.single('image')` makes Multer attach one file object to `req.file`.
+postRoutes.post(
+  '/single',
+  upload.single('image'),
+  validateBodyZod(postInputSchema),
+  createPostSingle,
+);
+
+// # Multiple Upload Route
+// * This route shows how one form submission can attach several images to the same post.
 postRoutes.post(
   '/',
-  upload.array('image', 4), // max. 4 files // -> returns `req.files`
+  upload.array('image', 4),
   validateBodyZod(postInputSchema),
-  createPost2,
+  createPostMultiple,
 );
 
 postRoutes.get('/:id', getPostById);
