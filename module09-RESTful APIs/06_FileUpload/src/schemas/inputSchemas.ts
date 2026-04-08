@@ -21,7 +21,7 @@ export const userInputSchema = z.strictObject({
 export const postInputSchema = z.strictObject({
   title: z
     .string({ error: 'title must be a string' })
-    .min(5, { error: 'title must be at least 5 characters long' })
+    .min(2, { error: 'title must be at least 5 characters long' })
     .max(120, { error: 'title must be at most 120 characters long' }),
 
   content: z
@@ -33,6 +33,9 @@ export const postInputSchema = z.strictObject({
     .string({ error: 'Author must be a string' })
     .min(24, { message: 'author (userId) is required' }),
   // .regex(/^[a-f\d]{24}$/i, { error: 'author must be a valid userId' }),
+
+  // image_url: z.url().optional(), // single file
+  image_url: z.array(z.url()).optional(), // multiple files
 
   // ! Do not accept createdAt/updatedAt from clients; Mongoose owns timestamps.
   // createdAt: z.date().optional();

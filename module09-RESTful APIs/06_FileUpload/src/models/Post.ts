@@ -1,15 +1,6 @@
-import type { Document, Types } from 'mongoose';
 import { model, Schema } from 'mongoose';
 
-export interface IPost extends Document {
-  title: string;
-  content: string;
-  author: Types.ObjectId;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-const postSchema = new Schema<IPost>(
+const postSchema = new Schema(
   {
     title: {
       type: String,
@@ -26,8 +17,12 @@ const postSchema = new Schema<IPost>(
       ref: 'User',
       required: true,
     },
+    image_url: {
+      // type: String, // upload a single file
+      type: [String], // upload multiple files
+    },
   },
   { timestamps: true },
 );
 
-export default model<IPost>('Post', postSchema);
+export default model('Post', postSchema);

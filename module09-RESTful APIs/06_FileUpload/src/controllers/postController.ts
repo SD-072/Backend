@@ -8,14 +8,51 @@ import type { postInputSchema, postUpdateSchema } from '#schemas';
 type PostInputDTO = z.infer<typeof postInputSchema>;
 type PostUpdateDTO = z.infer<typeof postUpdateSchema>;
 
-export const createPost: RequestHandler<
+// export const createPost: RequestHandler<
+//   unknown,
+//   unknown,
+//   PostInputDTO
+// > = async (req, res) => {
+//   const { title, content, author } = req.body;
+//   const image = req.file; // access the uploaded file
+
+//   if (!title || !content || !author) {
+//     throw new Error('Missing required fields', { cause: 400 });
+//   }
+
+//   const newPost = await Post.create({
+//     title,
+//     content,
+//     author,
+//     image_url: image?.path,
+//   });
+
+//   console.log('cloudinary upload result', image);
+//   res.status(201).json(newPost);
+// };
+
+export const createPost2: RequestHandler<
   unknown,
   unknown,
   PostInputDTO
 > = async (req, res) => {
   const { title, content, author } = req.body;
+  const files = (req.files as Express.Multer.File[]) || []; // access the uploaded files
 
-  const newPost = await Post.create({ title, content, author });
+  if (!title || !content || !author) {
+    throw new Error('Missing required fields', { cause: 400 });
+  }
+
+  const imageUrls = files.map((file) => file.path);
+
+  const newPost = await Post.create({
+    title,
+    content,
+    author,
+    image_url: imageUrls,
+  });
+
+  console.log('cloudinary multiple upload results', files);
   res.status(201).json(newPost);
 };
 
