@@ -40,7 +40,7 @@ In our implementation, we've separated concerns into two distinct microservices:
 
 This separation provides better scalability, maintainability, and security by isolating authentication logic from business logic.
 
-![architecture](./architecture.png)
+![architecture](./architecture.avif)
 
 ### And how to implement it?
 
@@ -93,14 +93,14 @@ Authentication in the frontend is just [smoke and mirrors](https://dictionary.ca
   - Rejection from authenticated routes
 - Login persistence: if the user returns to the page and the refresh token is still valid, automatically sign them in
 
-![frontend to auth server](./frontend_to_auth-server.png)
+![frontend to auth server](./frontend_to_auth-server.avif)
 
 **Subsequent requests**
 
 - On any subsequent request to the Travel Journal API that needs authentication, we will attach the access token
 - Handle token expiration by automatically refreshing tokens when needed
 
-![frontend to data server](./frontend_to_data-server.png)
+![frontend to data server](./frontend_to_data-server.avif)
 
 ### Implementation details
 
