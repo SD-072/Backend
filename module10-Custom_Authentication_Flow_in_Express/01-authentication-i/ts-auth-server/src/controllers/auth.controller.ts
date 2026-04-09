@@ -1,14 +1,36 @@
+import { randomUUID } from 'node:crypto';
+import bcrypt from 'bcrypt';
 import type { RequestHandler } from 'express';
-import { ACCESS_JWT_SECRET, REFRESH_TOKEN_TTL, SALT_ROUNDS } from '#config';
+import jwt from 'jsonwebtoken';
+import { ACCESS_JWT_SECRET, ACCESS_TOKEN_TTL, REFRESH_TOKEN_TTL, SALT_ROUNDS } from '#config';
+import { RefreshToken, User } from '#models';
 
 export const register: RequestHandler = async (req, res) => {
-  // TODO: Implement user registration
-  // Query the DB for an existing user with that email
-  // Throw an error if a user with that email if found
-  // Salt and hash the user's password
-  // Save the user to the database with the hashed password
-  // Generate access token (JWT) and refresh token (random string saved to database)
-  // Send the access token (in the response body) and the refresh token
+  const { email, password, firstName, lastName } = req.body;
+
+  const userExist = await User.exists({ email });
+  if (userExist) throw new Error('Email already registered', { cause: { status: 409 } });
+
+  const salt = await bcrypt.genSalt(SALT_ROUNDS);
+  const hashedPW = await bcrypt.hash(password, salt);
+
+  const user = await User.create({ email, password: hashedPW, firstName, lastName }); // doesn't include confirmPassword
+
+  const payload = { roles: user.roles };
+  const secret = ACCESS_JWT_SECRET;
+  const tokenOptions = {
+    expiresIn: ACCESS_TOKEN_TTL,
+    subject: user._id.toString()
+  };
+  const accessToken = jwt.sign(payload, secret, tokenOptions);
+
+  const refreshToken = randomUUID();
+  await RefreshToken.create({
+    token: refreshToken,
+    userId: user._id
+  });
+
+  res.status(201).json({ message: 'Registered', accessToken, refreshToken });
 };
 
 export const login: RequestHandler = async (req, res) => {

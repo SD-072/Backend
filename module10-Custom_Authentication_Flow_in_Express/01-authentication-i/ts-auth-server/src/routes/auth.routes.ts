@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { login, logout, me, refresh, register } from '#controllers';
 import { validateBody } from '#middleware';
-import { loginSchema, registerSchema } from '#schemas'; // TODO: use the schemas for validation
+import { loginSchema, registerSchema } from '#schemas';
 
 const authRoutes = Router();
 

@@ -24,6 +24,8 @@ const refreshTokenSchema = new Schema(
 );
 
 // Creates a TTL (Time-To-Live) Index. Document will be removed automatically after <REFRESH_TOKEN_TTL> seconds.
-refreshTokenSchema.index({ createdAt: 1 }, { expireAfterSeconds: 0 });
+refreshTokenSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
+
+refreshTokenSchema.index({ userId: 1 });
 
 export default model('RefreshToken', refreshTokenSchema);

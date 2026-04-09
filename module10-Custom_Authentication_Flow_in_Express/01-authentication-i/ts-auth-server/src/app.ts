@@ -1,8 +1,7 @@
+import { CLIENT_BASE_URL, PORT } from '#config';
 import '#db';
-import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
-import { CLIENT_BASE_URL, PORT } from '#config';
 import { errorHandler, notFoundHandler } from '#middleware';
 import { authRoutes } from '#routes';
 
@@ -16,7 +15,7 @@ app.use(
   })
 );
 
-app.use(express.json(), cookieParser());
+app.use(express.json());
 
 app.use('/auth', authRoutes);
 
