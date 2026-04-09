@@ -67,13 +67,36 @@ export const logout: RequestHandler = async (req, res) => {
 
 export const me: RequestHandler = async (req, res, next) => {
   // TODO: Implement a me handler
-  // Get the access token from the request headers
-  // Get the Authorization header from the request
-  // Isolate the access token
-  // Throw an error if there is not access token
-  // Verify the access token
-  // If token is expired, add code: ACCESS_TOKEN_EXPIRED to error
-  // Query the database for the user who is the sub of the access token
-  // Throw an error if no user is found
-  // Send user profile with success message in response body
+  // Get the access token from the request headers.
+  const authHeader = req.header('authorization');
+  console.log('authHeader:', authHeader);
+
+  const accessToken = authHeader?.split(' ')[1];
+  // If there is no access token, throw a 401 error with an appropriate message.
+
+  try {
+    // Verify the access token.
+    // const decoded = jwt.verify(accessToken, ACCESS_JWT_SECRET) as jwt.JwtPayload;
+    // console.log(decoded);
+    //
+    // If decoded.sub is falsy, throw a 403 error and indicate that the token is invalid or expired.
+    //
+    // Query the DB to find the user by the ID that matches decoded.sub.
+    //
+    // Throw a 404 error if no user is found.
+    //
+    // Send a generic success message and the user info in the response body.
+  } catch (error) {
+    // If the error is because the token expired, call next with a 401 error and an `ACCESS_TOKEN_EXPIRED` code.
+    if (error instanceof jwt.TokenExpiredError) {
+      next(
+        new Error('Expired access token', {
+          cause: { status: 401, code: 'ACCESS_TOKEN_EXPIRED' }
+        })
+      );
+    } else {
+      // Call next with a new 401 error indicating an invalid access token.
+      next(new Error('Invalid access token.', { cause: { status: 401 } }));
+    }
+  }
 };
