@@ -1,9 +1,9 @@
-import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcrypt';
 import type { RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
-import { ACCESS_JWT_SECRET, ACCESS_TOKEN_TTL, REFRESH_TOKEN_TTL, SALT_ROUNDS } from '#config';
+import { ACCESS_JWT_SECRET, SALT_ROUNDS } from '#config';
 import { RefreshToken, User } from '#models';
+import { createTokens } from '#utils';
 
 export const register: RequestHandler = async (req, res) => {
   const { email, password, firstName, lastName } = req.body;
@@ -15,77 +15,84 @@ export const register: RequestHandler = async (req, res) => {
 
   const user = await User.create({ email, password: hashedPW, firstName, lastName });
 
-  const payload = { roles: user.roles };
-  const secret = ACCESS_JWT_SECRET;
-  const tokenOptions = {
-    expiresIn: ACCESS_TOKEN_TTL,
-    subject: user._id.toString()
-  };
-  const accessToken = jwt.sign(payload, secret, tokenOptions);
+  const [refreshToken, accessToken] = await createTokens(user);
 
-  const refreshToken = randomUUID();
-
-  await RefreshToken.create({
-    token: refreshToken,
-    userId: user._id
-  });
-
-  res.status(201).json({ message: 'Registered', accessToken, refreshToken });
+  res.status(201).json({ message: 'Registered', refreshToken, accessToken });
 };
 
 export const login: RequestHandler = async (req, res) => {
-  // TODO: Implement user login
-  // Query the DB for an existing user with that email (make sure to .select('+password') so we can compare it to the hashed password)
-  // Throw an error is a user with that email is NOT found
-  // Compare the hashed password to the password the user provided
-  // Throw an error if the passwords don't match
-  // Delete all refresh tokens from that user
-  // Generate access token (JWT) and refresh token (random string saved to database)
-  // Send the access token (in the response body) and the refresh token (in a cookie)
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ email }).lean(); // lean() = read-only & we get JS-object, isntead of MongoDB document
+  if (!user) throw new Error('Incorrect credentials', { cause: { status: 401 } });
+
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) throw new Error('Incorrect credentials', { cause: { status: 401 } });
+
+  await RefreshToken.deleteMany({ userId: user._id });
+
+  const [refreshToken, accessToken] = await createTokens(user);
+
+  res.status(200).json({ message: 'Welcome back!', refreshToken, accessToken });
 };
 
 export const refresh: RequestHandler = async (req, res) => {
   // TODO: Implement access token refresh and refresh token rotation
-  // Destructure the refreshToken from req.cookies
-  // Throw an error if there is no refreshToken cookie
-  // Query the database for the matching stored refresh token
-  // Throw an error if no stored token was found
-  // Delete the stored token (since we'll be rotating it with a new refresh token)
-  // Query the database for the user associated with that token
-  // Throw an error if no user is found
-  // Generate access token (JWT) and refresh token (random string saved to database)
-  // Send the access token (in the response body) and the refresh token (in a cookie)
+  // destructure refreshToken from the body of the request
+  //
+  // if no refreshToken, throw a 401 (or validate with Zod)
+  //
+  // query the db for the refresh token as a token proeprty that matches the refreshToken
+  //
+  // if not stored token is found, throw 403
+  //
+  //  delete the stored one from the db
+  //
+  //  query the db for a user tha tmatches the userId of the stored token
+  //
+  // throw a 403 if no user is found
+  //
+  // create new tokens with our util function
+  //
+  // send success message and new tokens in the body of the response
 };
 
 export const logout: RequestHandler = async (req, res) => {
   // TODO: Implement logout by removing the tokens
-  // Get the refreshToken cookie
-  // If a refreshToken cookie is found, delete the corresponding stored token from the database
-  // Clear the refreshToken cookie
-  // Send a success message in the response body
+  // clearing all tokens from local storage on the client
+  // destructure refreshToken from the body of the request
+  //
+  // delete refreshToken from db that matches that refreshToken
+  //
+  // send generic success message in response body
 };
 
 export const me: RequestHandler = async (req, res, next) => {
-  // TODO: Implement a me handler
   // Get the access token from the request headers.
-  const authHeader = req.header('authorization');
-  console.log('authHeader:', authHeader);
-
+  const authHeader = req.header('authorization'); // Bearer <access-token>
+  // console.log('authHeader:\n', authHeader);
   const accessToken = authHeader?.split(' ')[1];
+  // console.log('accessToken:\n', accessToken);
   // If there is no access token, throw a 401 error with an appropriate message.
+  if (!accessToken) throw new Error('Please sign in', { cause: { status: 401 } });
 
   try {
     // Verify the access token.
-    // const decoded = jwt.verify(accessToken, ACCESS_JWT_SECRET) as jwt.JwtPayload;
+    const decoded = jwt.verify(accessToken, ACCESS_JWT_SECRET) as jwt.JwtPayload;
     // console.log(decoded);
     //
     // If decoded.sub is falsy, throw a 403 error and indicate that the token is invalid or expired.
-    //
+    if (!decoded.sub)
+      throw new Error('Invalid or expired access token', { cause: { status: 401 } });
+
     // Query the DB to find the user by the ID that matches decoded.sub.
-    //
+    const user = await User.findById(decoded.sub).select('-password').lean();
+
     // Throw a 404 error if no user is found.
-    //
+    if (!user) throw new Error('User not found', { cause: { status: 404 } });
+
     // Send a generic success message and the user info in the response body.
+    res.json({ message: 'Valid token', user });
   } catch (error) {
     // If the error is because the token expired, call next with a 401 error and an `ACCESS_TOKEN_EXPIRED` code.
     if (error instanceof jwt.TokenExpiredError) {
