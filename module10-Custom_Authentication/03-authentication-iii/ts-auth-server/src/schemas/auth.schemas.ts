@@ -35,3 +35,7 @@ export const loginSchema = z.strictObject({
   email: emailSchema,
   password: basePasswordSchema
 });
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1)
+});

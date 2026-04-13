@@ -1,16 +1,17 @@
 import cors from 'cors';
 import express from 'express';
 import '#db';
+import { PORT } from '#config';
 import { errorHandler, notFoundHandler } from '#middleware';
 import { postRoutes } from '#routes';
-import { PORT } from '#config';
 
 const app = express();
 
 app.use(
   cors({
-    origin: '*',
-    exposedHeaders: ['WWW-Authenticate'] // needed to send the 'refresh trigger''
+    origin: process.env.CLIENT_BASE_URL, // for use with credentials, origin(s) need to be specified
+    // credentials: true, // sends and receives secure cookies
+    exposedHeaders: ['WWW-Authenticate'] // needed to send the 'refresh trigger'
   })
 );
 app.use(express.json());
