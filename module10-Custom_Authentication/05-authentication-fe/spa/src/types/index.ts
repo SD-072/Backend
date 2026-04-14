@@ -18,3 +18,20 @@ export type DbPost = DbEntry & PostInput;
 export type SetPost = Dispatch<SetStateAction<DbPost | null>>;
 
 export type ModalRef = RefObject<HTMLDialogElement | null>;
+
+export type User = DbEntry & {
+  email: string;
+  firstName: string;
+  lastName: string;
+  roles: string[];
+};
+
+export type LoginInput = { email: string; password: string };
+
+export type AuthContextType = {
+  signedIn: boolean;
+  user: User | null;
+  // handleSignIn: ({ email, password }: LoginInput) => Promise<void>;
+  handleSignIn: (input: LoginInput) => Promise<void>;
+  handleSignOut: () => Promise<void>;
+};

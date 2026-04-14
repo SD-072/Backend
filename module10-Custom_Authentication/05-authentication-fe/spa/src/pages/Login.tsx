@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import { toast } from 'react-toastify';
+import { useAuth } from '@/context';
 
 type LoginFormState = {
   email: string;
@@ -13,6 +14,7 @@ const Login = () => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
+  const { signedIn, handleSignIn } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -22,8 +24,9 @@ const Login = () => {
     try {
       if (!email || !password) throw new Error('All fields are required');
       setLoading(true);
-      console.log(email, password);
-      // TODO: Add login logic
+      // console.log(email, password);
+      const res = handleSignIn({ email, password });
+      console.log(res);
       toast.success('Login attempted (not implemented)');
     } catch (error: unknown) {
       const message = (error as { message: string }).message;
@@ -33,6 +36,7 @@ const Login = () => {
     }
   };
 
+  if (signedIn) return <Navigate to='/create' />;
   return (
     <form className='my-5 md:w-1/2 mx-auto flex flex-col gap-3' onSubmit={handleSubmit}>
       <label className='input input-bordered flex items-center gap-2'>
