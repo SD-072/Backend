@@ -123,7 +123,7 @@ export const me: RequestHandler<NoRouterParams, MeResBody> = async (req, res, ne
   try {
     // Verify the access token.
     const decoded = jwt.verify(accessToken, ACCESS_JWT_SECRET) as jwt.JwtPayload;
-    console.log(decoded);
+    // console.log(decoded);
     //
     // If decoded.sub is falsy, throw a 403 error and indicate that the token is invalid or expired.
     if (!decoded.sub) throw new Error('Invalid access token', { cause: { status: 401 } });

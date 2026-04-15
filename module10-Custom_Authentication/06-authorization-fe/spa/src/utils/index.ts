@@ -12,7 +12,7 @@ window.fetch = async (url, options, ...rest) => {
   const authHeader = res.headers.get('www-authenticate');
 
   if (authHeader?.includes('token_expired')) {
-    console.log('ATTEMPT REFRESH');
+    // console.log('ATTEMPT REFRESH');
     const currRefreshToken = localStorage.getItem('refreshToken');
 
     const refreshRes = await originalFetch(`${authServiceURL}/refresh`, {
