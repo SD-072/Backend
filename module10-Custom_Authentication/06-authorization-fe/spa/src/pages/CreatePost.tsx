@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
+import { useAuth } from '@/context';
 import { createPost } from '@/data';
-import type { DbPost, PostInput } from '@/types';
+import type { PostInput } from '@/types';
 
 const CreatePost = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [{ title, author, image, content }, setForm] = useState<PostInput>({
+  const [{ title, image, content }, setForm] = useState<PostInput>({
     title: '',
-    author: '',
     image: '',
     content: ''
   });
@@ -20,17 +21,20 @@ const CreatePost = () => {
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     try {
       e.preventDefault();
-      if (!title || !author || !image || !content) {
+      if (!title || !image || !content) {
         throw new Error('All fields are required');
       }
+      if (!user) {
+        throw new Error('Please sign in');
+      }
       setLoading(true);
-      const newPost: DbPost = await createPost({
+
+      const newPost = await createPost({
         title,
-        author,
         image,
         content
       });
-      setForm({ title: '', author: '', image: '', content: '' });
+      setForm({ title: '', image: '', content: '' });
       navigate(`/post/${newPost._id}`);
     } catch (error: unknown) {
       const message = (error as { message: string }).message;
@@ -50,16 +54,6 @@ const CreatePost = () => {
             value={title}
             onChange={handleChange}
             placeholder='A title for your post...'
-            className='input input-bordered w-full'
-          />
-        </label>
-        <label className='form-control grow'>
-          <div className='label-text'>Author</div>
-          <input
-            name='author'
-            value={author}
-            onChange={handleChange}
-            placeholder='Your name...'
             className='input input-bordered w-full'
           />
         </label>

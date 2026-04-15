@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react';
-import { login, logout, me } from '@/data';
-import type { AuthContextType, LoginInput, User } from '@/types';
+import { login, logout, me, registration } from '@/data';
+import type { AuthContextType, LoginInput, RegisterFormState, User } from '@/types';
 import { AuthContext } from '.';
 
 const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -33,6 +33,16 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     setCheckSession(true);
   };
 
+  const handleRegister = async (formData: RegisterFormState) => {
+    const { accessToken, refreshToken } = await registration(formData);
+
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    // console.log(res);
+    // setSignedIn(true);
+    setCheckSession(true);
+  };
+
   const handleSignOut = async () => {
     await logout();
 
@@ -47,7 +57,8 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     signedIn,
     user,
     handleSignIn,
-    handleSignOut
+    handleSignOut,
+    handleRegister
   };
 
   return <AuthContext value={value}>{children}</AuthContext>;

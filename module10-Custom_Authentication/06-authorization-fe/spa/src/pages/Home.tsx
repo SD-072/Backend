@@ -11,7 +11,7 @@ const Home = () => {
   useEffect(() => {
     (async () => {
       try {
-        const fetchedPosts: DbPost[] = await getPosts();
+        const fetchedPosts = await getPosts();
         setPosts(fetchedPosts);
       } catch (error: unknown) {
         const message = (error as { message: string }).message;
@@ -32,6 +32,8 @@ const Home = () => {
           content={post.content}
           image={post.image}
           title={post.title}
+          author={post.author}
+          setPosts={setPosts}
         />
       ))}
     </div>

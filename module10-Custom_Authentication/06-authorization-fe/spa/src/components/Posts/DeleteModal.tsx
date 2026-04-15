@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 
 import { deletePost } from '@/data';
-import type { ModalRef } from '@/types';
+import type { ModalRef, SetPosts } from '@/types';
 
 type DeleteModalProps = {
   deleteModalRef: ModalRef;
   _id: string;
+  setPosts?: SetPosts;
 };
 
-const DeleteModal = ({ deleteModalRef, _id }: DeleteModalProps) => {
+const DeleteModal = ({ deleteModalRef, _id, setPosts }: DeleteModalProps) => {
   const [value, setValue] = useState('');
   const [isValid, setIsValid] = useState(false);
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const DeleteModal = ({ deleteModalRef, _id }: DeleteModalProps) => {
     e.preventDefault();
     try {
       await deletePost(_id);
+      setPosts?.(prev => prev.filter(post => post._id !== _id));
     } catch (error) {
       const message = (error as { message: string }).message;
       toast.error(message);

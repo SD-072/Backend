@@ -8,14 +8,14 @@ export type DbEntry = {
 
 export type PostInput = {
   title: string;
-  author: string;
   image: string;
   content: string;
 };
 
-export type DbPost = DbEntry & PostInput;
+export type DbPost = DbEntry & PostInput & { author: string };
 
 export type SetPost = Dispatch<SetStateAction<DbPost | null>>;
+export type SetPosts = Dispatch<SetStateAction<DbPost[]>>;
 
 export type ModalRef = RefObject<HTMLDialogElement | null>;
 
@@ -36,4 +36,13 @@ export type AuthContextType = {
   user: User | null;
   handleSignIn: ({ email, password }: LoginInput) => Promise<void>;
   handleSignOut: () => Promise<void>;
+  handleRegister: (formData: RegisterFormState) => Promise<void>;
+};
+
+export type RegisterFormState = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
 };

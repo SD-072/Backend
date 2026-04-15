@@ -11,7 +11,7 @@ postRoutes.route('/').get(getAllPosts).post(authenticate, hasRole('user'), valid
 postRoutes
   .route('/:id')
   .get(getSinglePost)
-  .put(authenticate, hasRole('self', 'senior'), validateBody(postSchema), updatePost)
+  .put(authenticate, hasRole('self'), validateBody(postSchema), updatePost)
   .delete(authenticate, hasRole('self'), deletePost);
 
 export default postRoutes;

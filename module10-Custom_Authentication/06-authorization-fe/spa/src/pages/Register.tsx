@@ -1,16 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import { toast } from 'react-toastify';
-
-type RegisterFormState = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-};
+import { useAuth } from '@/context';
+import type { RegisterFormState } from '@/types';
 
 const Register = () => {
+  const { signedIn, handleRegister } = useAuth();
   const [{ firstName, lastName, email, password, confirmPassword }, setForm] =
     useState<RegisterFormState>({
       firstName: '',
@@ -24,7 +19,7 @@ const Register = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     try {
       e.preventDefault();
       if (!firstName || !lastName || !email || !password || !confirmPassword)
@@ -32,8 +27,15 @@ const Register = () => {
       if (password !== confirmPassword) throw new Error('Passwords do not match');
       setLoading(true);
       console.log(firstName, lastName, email, password, confirmPassword);
-      // TODO: Implement registration logic
-      toast.success('Registration attempted (not implemented)');
+
+      await handleRegister({
+        firstName,
+        lastName,
+        email,
+        password,
+        confirmPassword
+      });
+      toast.success('Registration successful');
     } catch (error: unknown) {
       const message = (error as { message: string }).message;
       toast.error(message);
@@ -42,6 +44,7 @@ const Register = () => {
     }
   };
 
+  if (signedIn) return <Navigate to='/create' />;
   return (
     <form className='my-5 md:w-1/2 mx-auto flex flex-col gap-3' onSubmit={handleSubmit}>
       <div className='flex justify-between gap-2'>

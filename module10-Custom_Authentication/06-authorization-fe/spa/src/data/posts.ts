@@ -24,10 +24,12 @@ export const getSinglePost = async (id: string): Promise<DbPost> => {
 };
 
 export const createPost = async (formData: PostInput): Promise<DbPost> => {
+  const accessToken = localStorage.getItem('accessToken');
   const res = await fetch(baseURL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`
     },
     body: JSON.stringify(formData)
   });
@@ -40,24 +42,33 @@ export const createPost = async (formData: PostInput): Promise<DbPost> => {
 };
 
 export const updatePost = async (id: string, formData: PostInput): Promise<DbPost> => {
+  const accessToken = localStorage.getItem('accessToken');
+
   const res = await fetch(`${baseURL}/${id}`, {
     method: 'PUT',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`
     },
     body: JSON.stringify(formData)
   });
+
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData?.error ?? 'An error occurred updating the post');
   }
+
   const data: DbPost = await res.json();
   return data;
 };
 
 export const deletePost = async (id: string): Promise<{ message: string }> => {
+  const accessToken = localStorage.getItem('accessToken');
   const res = await fetch(`${baseURL}/${id}`, {
-    method: 'DELETE'
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    }
   });
   if (!res.ok) {
     const errorData = await res.json();

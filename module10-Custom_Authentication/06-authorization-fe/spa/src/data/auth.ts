@@ -1,4 +1,4 @@
-import type { LoginInput, User } from '@/types';
+import type { LoginInput, RegisterFormState, User } from '@/types';
 import { authServiceURL } from '../utils';
 
 type SuccessRes = { message: string };
@@ -54,4 +54,18 @@ const me = async (): Promise<User> => {
   return user;
 };
 
-export { login, me, logout };
+const registration = async (formData: RegisterFormState): Promise<TokenRes> => {
+  const res = await fetch(`${authServiceURL}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData)
+  });
+
+  if (!res.ok) throw new Error(`${res.status}. Something went wrong!`);
+
+  const data = (await res.json()) as TokenRes;
+
+  return data;
+};
+
+export { login, me, logout, registration };

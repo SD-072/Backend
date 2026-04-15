@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { updatePost } from '@/data';
-import type { ModalRef, SetPost } from '@/types';
+import type { ModalRef, SetPost, SetPosts } from '@/types';
 
 type EditModalProps = {
   editModalRef: ModalRef;
@@ -9,8 +9,8 @@ type EditModalProps = {
   content: string;
   image: string;
   title: string;
-  author: string;
-  setPost: SetPost;
+  setPost?: SetPost;
+  setPosts?: SetPosts;
 };
 
 const EditModal = ({
@@ -19,12 +19,11 @@ const EditModal = ({
   content,
   image,
   title,
-  author,
-  setPost
+  setPost,
+  setPosts
 }: EditModalProps) => {
-  const [{ newTitle, newAuthor, newImage, newContent }, setForm] = useState({
+  const [{ newTitle, newImage, newContent }, setForm] = useState({
     newTitle: title,
-    newAuthor: author,
     newImage: image,
     newContent: content
   });
@@ -38,16 +37,17 @@ const EditModal = ({
     try {
       e.preventDefault();
 
-      if (!newTitle || !newAuthor || !newImage || !newContent)
-        throw new Error('All fields are required');
+      if (!newTitle || !newImage || !newContent) throw new Error('All fields are required');
       setLoading(true);
+
       const updatedPost = await updatePost(_id, {
         title: newTitle,
-        author: newAuthor,
         image: newImage,
         content: newContent
       });
-      setPost(updatedPost);
+
+      setPost?.(updatedPost);
+      setPosts?.(prev => prev.map(post => (post._id === _id ? updatedPost : post)));
     } catch (error) {
       const message = (error as { message: string }).message;
       toast.error(message);
@@ -74,16 +74,6 @@ const EditModal = ({
                 value={newTitle}
                 onChange={handleChange}
                 placeholder='A title for your post...'
-                className='input input-bordered w-full'
-              />
-            </label>
-            <label className='form-control grow'>
-              <div className='label-text'>Author</div>
-              <input
-                name='author'
-                value={newAuthor}
-                onChange={handleChange}
-                placeholder='Your name...'
                 className='input input-bordered w-full'
               />
             </label>
