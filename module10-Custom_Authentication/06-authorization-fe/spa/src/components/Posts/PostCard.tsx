@@ -21,7 +21,7 @@ const PostCard = ({ _id, content, image, title, author, setPosts }: PostCardProp
   const deleteModalRef = useRef<HTMLDialogElement | null>(null);
 
   const showEditModal = () => editModalRef.current?.showModal();
-  const showDeleteEditModal = () => deleteModalRef.current?.showModal();
+  const showDeleteModal = () => deleteModalRef.current?.showModal();
 
   return (
     <div className='card bg-base-100 shadow-xl'>
@@ -49,7 +49,7 @@ const PostCard = ({ _id, content, image, title, author, setPosts }: PostCardProp
               setPosts={setPosts}
             />
 
-            <button onClick={showDeleteEditModal} className='btn btn-error'>
+            <button onClick={showDeleteModal} className='btn btn-error'>
               Delete
             </button>
             <DeleteModal deleteModalRef={deleteModalRef} _id={_id} setPosts={setPosts} />

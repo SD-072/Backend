@@ -54,7 +54,7 @@ const me = async (): Promise<User> => {
   return user;
 };
 
-const registration = async (formData: RegisterFormState): Promise<TokenRes> => {
+const register = async (formData: RegisterFormState): Promise<TokenRes> => {
   const res = await fetch(`${authServiceURL}/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -68,4 +68,4 @@ const registration = async (formData: RegisterFormState): Promise<TokenRes> => {
   return data;
 };
 
-export { login, me, logout, registration };
+export { login, me, logout, register };

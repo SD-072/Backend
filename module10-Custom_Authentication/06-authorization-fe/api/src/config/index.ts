@@ -3,7 +3,7 @@ import { z } from 'zod';
 const envSchema = z.object({
   MONGO_URI: z.url({ protocol: /mongodb/ }),
   DB_NAME: z.string().default('travel-journal'),
-  PORT: z.int().default(8000)
+  PORT: z.coerce.number().int().default(8000)
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
