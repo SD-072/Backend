@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useState } from 'react';
-import { login, logout, me, registration } from '@/data';
+import { login, logout, me, register } from '@/data';
 import type { AuthContextType, LoginInput, RegisterFormState, User } from '@/types';
 import { AuthContext } from '.';
 
@@ -34,7 +34,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleRegister = async (formData: RegisterFormState) => {
-    const { accessToken, refreshToken } = await registration(formData);
+    const { accessToken, refreshToken } = await register(formData);
 
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
