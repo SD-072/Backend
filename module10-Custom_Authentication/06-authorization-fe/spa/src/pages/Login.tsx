@@ -9,12 +9,12 @@ type LoginFormState = {
 };
 
 const Login = () => {
+  const { signedIn, handleSignIn } = useAuth();
   const [{ email, password }, setForm] = useState<LoginFormState>({
     email: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const { signedIn, handleSignIn } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -24,10 +24,11 @@ const Login = () => {
     try {
       if (!email || !password) throw new Error('All fields are required');
       setLoading(true);
-      // console.log(email, password);
-      await handleSignIn({ email, password });
-      // console.log(res);
-      toast.success('Login successfull');
+      console.log(email, password);
+      // TODO: Add login logic
+      const res = await handleSignIn({ email, password });
+      console.log(res);
+      toast.success('Login attempted (not implemented)');
     } catch (error: unknown) {
       const message = (error as { message: string }).message;
       toast.error(message);
