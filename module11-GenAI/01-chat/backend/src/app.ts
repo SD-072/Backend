@@ -4,6 +4,8 @@ import express from 'express';
 
 import mongoose from 'mongoose';
 import OpenAI from 'openai';
+import { zodResponseFormat } from 'openai/helpers/zod.mjs';
+import z from 'zod';
 
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
@@ -58,11 +60,7 @@ app.post('/messages', async (req, res) => {
 
   const result = await client.chat.completions.create({
     model: 'gemini-3.1-flash-lite-preview',
-    messages: [
-      // { role: 'system', content: 'answer briefly' },
-      ...chat.history,
-      userMessage,
-    ],
+    messages: [{ role: 'system', content: 'answer briefly' }, ...chat.history, userMessage],
     // reasoning_effort: 'minimal',
     // temperature: 0.7,
     // max_completion_tokens: 400,
@@ -84,7 +82,51 @@ app.post('/messages', async (req, res) => {
 
 app.post('/images', async (req, res) => {
   const { prompt } = req.body;
-  // ...
+
+  const result = await client.images.generate({
+    model: 'gpt-image-1.5',
+    prompt,
+    // response_format: 'b64_json',
+  });
+
+  res.json(result);
+  // res.json({ b64_json: result.data[0].b64_json });
+});
+
+const Recipe = z.object({
+  title: z.string(),
+  ingredients: z.array(
+    z.object({
+      name: z.string(),
+      quantity: z
+        .string()
+        .describe('The quantity of the required ingredients. Use metric units if possible.'),
+      estimates_cost_per_unit: z
+        .number()
+        .describe('The quanitity of the required ingredient in EUR cents'),
+    }),
+  ),
+  preparation_description: z.string(),
+  time_in_minutes: z.number(),
+});
+
+app.post('/recipes', async (req, res) => {
+  const { prompt } = req.body;
+
+  const result = await client.chat.completions.parse({
+    model: 'gemini-3.1-flash-lite-preview',
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are an innovative chef, who creatively designs new recipies. You really like pepper.',
+      },
+      { role: 'user', content: prompt },
+    ],
+    response_format: zodResponseFormat(Recipe, 'recipe'),
+  });
+
+  res.json({ recipe: result.choices[0]?.message.parsed });
 });
 
 app.use('/{*splat}', () => {
