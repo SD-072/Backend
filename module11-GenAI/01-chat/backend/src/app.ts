@@ -1,11 +1,16 @@
 import cors from 'cors';
 import type { ErrorRequestHandler } from 'express';
 import express from 'express';
-
 import mongoose from 'mongoose';
-import OpenAI from 'openai';
+import { OpenAI } from 'openai/client.js';
 import { zodResponseFormat } from 'openai/helpers/zod.mjs';
 import z from 'zod';
+
+type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
+
+interface ChatDocument extends mongoose.Document {
+  history: ChatMessage[];
+}
 
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
@@ -15,9 +20,9 @@ await mongoose.connect(mongoUri, { dbName: 'chat' });
 
 const Chat = mongoose.model(
   'chat',
-  new mongoose.Schema({
+  new mongoose.Schema<ChatDocument>({
     history: {
-      type: Array,
+      type: [Object],
       default: [],
     },
   }),
@@ -30,7 +35,7 @@ const client = new OpenAI({
 // const client = new OpenAI();
 // const client = new OpenAI({ apiKey: 'ollama', baseURL: 'http://127.0.0.1:11434/v1' });
 
-const port = process.env.PORT || 8080;
+const port = Number(process.env.PORT ?? 8080);
 
 const app = express();
 
@@ -44,19 +49,13 @@ app.get('/', (_req, res) => {
 app.post('/messages', async (req, res) => {
   const { prompt, chatId } = req.body;
 
-  let chat;
-
-  if (!chatId) {
-    chat = await Chat.create({ history: [] });
-  } else {
-    chat = await Chat.findById(chatId);
-  }
+  const chat = chatId ? await Chat.findById(chatId) : await Chat.create({ history: [] });
   // console.log('Chat', chat);
 
   if (!chat) {
     throw Error('Chat not found', { cause: { status: 404 } });
   }
-  const userMessage = { role: 'user', content: prompt };
+  const userMessage = { role: 'user', content: prompt } as ChatMessage;
 
   const result = await client.chat.completions.create({
     model: 'gemini-3.1-flash-lite-preview',
@@ -73,7 +72,7 @@ app.post('/messages', async (req, res) => {
 
   const answer = result.choices[0]?.message;
 
-  if (!answer) {
+  if (!answer?.content) {
     throw Error('No answer returned');
   }
 
