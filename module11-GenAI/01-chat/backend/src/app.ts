@@ -60,7 +60,11 @@ app.post('/messages', async (req, res) => {
 
   const result = await client.chat.completions.create({
     model: 'gemini-3.1-flash-lite-preview',
-    messages: [{ role: 'system', content: 'answer briefly' }, ...chat.history, userMessage],
+    messages: [
+      // { role: 'system', content: 'answer briefly' },
+      ...chat.history,
+      userMessage,
+    ],
     // reasoning_effort: 'minimal',
     // temperature: 0.7,
     // max_completion_tokens: 400,
@@ -70,7 +74,7 @@ app.post('/messages', async (req, res) => {
   const answer = result.choices[0]?.message;
 
   if (!answer) {
-    throw Error('Mo answer returned');
+    throw Error('No answer returned');
   }
 
   chat.history = [...chat.history, userMessage, answer];
@@ -101,7 +105,7 @@ const Recipe = z.object({
       quantity: z
         .string()
         .describe('The quantity of the required ingredients. Use metric units if possible.'),
-      estimates_cost_per_unit: z
+      estimated_cost_per_unit: z
         .number()
         .describe('The quanitity of the required ingredient in EUR cents'),
     }),
