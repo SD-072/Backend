@@ -26,7 +26,7 @@ if (!mongoUri) {
 await mongoose.connect(mongoUri, { dbName: 'chat' });
 
 // The chat history is stored as an array of plain objects for simplicity.
-const Chat = mongoose.model(
+const ChatModel = mongoose.model(
   'chat',
   new mongoose.Schema<ChatDocument>({
     history: {
@@ -63,6 +63,16 @@ app.get('/', (_req, res) => {
   res.json({ message: 'Running' });
 });
 
+// ─── System Prompt ────────────────────────────────────────────────────────────
+// The system prompt defines the assistant's personality and rules.
+// It is added as the first message when a new chat starts.
+const systemPrompt = {
+  role: 'system',
+  content:
+    // 'You are a senior software architect. Never answer programming questions with code. Keep every answer under 5 sentences.',
+    'You are a coding enthusiast and you like to answer with code snippets, even when they are not really needed.',
+} as ChatMessage;
+
 // ─── POST /messages ───────────────────────────────────────────────────────────
 // Main endpoint for chat messages.
 // Expected request body: { prompt: string, chatId?: string }
@@ -72,7 +82,8 @@ app.post('/messages', async (req, res) => {
   const { prompt, chatId } = req.body;
 
   // Load an existing chat or create a new one.
-  const chat = chatId ? await Chat.findById(chatId) : await Chat.create({ history: [] });
+  const chat =
+    chatId ? await ChatModel.findById(chatId) : await ChatModel.create({ history: [systemPrompt] });
   // console.log('Chat', chat);
 
   if (!chat) {
@@ -89,9 +100,20 @@ app.post('/messages', async (req, res) => {
       ...chat.history,
       userMessage,
     ],
+    // reasoning_effort controls how much "thinking time" reasoning models use.
+    // Lower values are faster and cheaper, higher values can improve hard answers.
     // reasoning_effort: 'minimal',
+
+    // temperature controls randomness.
+    // 0 means very predictable, higher values make answers more creative.
     // temperature: 0.7,
+
+    // max_completion_tokens limits how long the answer can be.
+    // Useful to keep responses short or control costs.
     // max_completion_tokens: 400,
+
+    // verbosity controls how detailed some models should be.
+    // Low verbosity asks the model to answer more briefly.
     // verbosity: 'low'
   });
 
