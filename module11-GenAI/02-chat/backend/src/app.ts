@@ -4,12 +4,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { OpenAI } from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod.mjs';
+import type { Chat } from 'openai/resources';
 import z from 'zod';
 
 // ─── Types & Schema ───────────────────────────────────────────────────────────
 // ChatMessage is the official OpenAI type for a single chat message.
 // It has the shape { role: "user" | "assistant" | "system", content: "..." }.
-type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
+type ChatMessage = Chat.Completions.ChatCompletionMessageParam;
 
 // ChatDocument extends a normal Mongoose document with a history array.
 // The history stores all messages of one conversation.
@@ -95,11 +96,7 @@ app.post('/messages', async (req, res) => {
   // This is how the model gets the context of the conversation.
   const result = await client.chat.completions.create({
     model: 'gemini-3.1-flash-lite-preview',
-    messages: [
-      // { role: 'system', content: 'answer briefly' },
-      ...chat.history,
-      userMessage,
-    ],
+    messages: [...chat.history, userMessage],
     // reasoning_effort controls how much "thinking time" reasoning models use.
     // Lower values are faster and cheaper, higher values can improve hard answers.
     // reasoning_effort: 'minimal',
@@ -131,6 +128,46 @@ app.post('/messages', async (req, res) => {
 
   // Send the answer and the chatId back to the frontend.
   res.json({ result: answer.content, chatId: chat._id });
+});
+
+// ─── POST /streaming ────────────────────────────────────────────────────────
+app.post('/messages/streaming', async (req, res) => {
+  const { prompt } = req.body;
+
+  const chatId = req.get('x-chat-id');
+
+  const chat = chatId ? await ChatModel.findById(chatId) : await ChatModel.create({ history: [] });
+
+  if (!chat) {
+    throw Error('Chat not found', { cause: { status: 404 } });
+  }
+
+  const stream = client.chat.completions.stream({
+    model: 'gemini-3.1-flash-lite-preview',
+    messages: [...chat.history, { role: 'user', content: prompt }],
+    stream: true,
+  });
+
+  res.set({
+    'content-type': 'text/plain; charset=utf-8',
+    'x-chat-id': chat._id.toString(),
+    'access-control-expose-headers': 'x-chat-id',
+  });
+
+  for await (const chunk of stream.toReadableStream()) {
+    res.write(chunk);
+  }
+
+  const answer = await stream.finalMessage();
+  const { content } = answer;
+  chat.history = [
+    ...chat.history,
+    { role: 'user', content: prompt },
+    { role: 'assistant', content: content },
+  ];
+  await chat.save();
+
+  res.end();
 });
 
 // ─── POST /images ─────────────────────────────────────────────────────────────

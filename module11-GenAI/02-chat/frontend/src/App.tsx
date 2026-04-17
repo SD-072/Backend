@@ -1,6 +1,33 @@
-import type { SubmitEventHandler } from 'react';
+import type { ReactNode, SubmitEventHandler } from 'react';
 import { useState } from 'react';
 import './App.css';
+import Markdown, { type ReactRenderer } from 'marked-react';
+import { ChatCompletionStream } from 'openai/lib/ChatCompletionStream';
+
+import Lowlight from 'react-lowlight';
+
+import 'react-lowlight/common';
+import 'highlight.js/styles/night-owl.css';
+
+const languageAliases: Record<string, string> = {
+	js: 'javascript',
+	ts: 'typescript',
+	sh: 'bash',
+	shell: 'bash',
+};
+
+const renderer = {
+	code(this: ReactRenderer, snippet: ReactNode, lang?: string) {
+		const normalizedLang = lang ? (languageAliases[lang] ?? lang) : undefined;
+
+		const language =
+			normalizedLang && Lowlight.hasLanguage(normalizedLang) ? normalizedLang : 'bash';
+
+		return (
+			<Lowlight key={this.elementId} language={language} value={String(snippet)} markers={[]} />
+		);
+	},
+};
 
 function App() {
 	const [pending, setPending] = useState(false);
@@ -11,8 +38,42 @@ function App() {
 	const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
 		e.preventDefault();
 
+		setAiResponse('');
+
 		try {
 			setPending(true);
+			const res = await fetch('http://localhost:8080/messages/streaming', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					...(chatId && { 'x-chat-id': chatId }),
+				},
+				body: JSON.stringify({ prompt }),
+			});
+
+			if (!res.ok) {
+				throw new Error(await res.text());
+			}
+			if (!res.body) throw new Error('Request failed');
+
+			setChatId(res.headers.get('x-chat-id'));
+
+			const runner = ChatCompletionStream.fromReadableStream(res.body);
+
+			runner.on('content', (delta) => {
+				setAiResponse((p) => p + delta);
+			});
+			// direct update
+			// setterStateFunction("Renke")
+			// function update
+			// setterStateFunction(p=> p + newValueICareWhatWeHadBeforeInState)
+
+			await runner.finalChatCompletion();
+
+			// const data = await res.json();
+			// // console.log(data);
+			// setAiResponse(data.result);
+			// setChatId(data.chatId);
 		} catch (error) {
 			console.error('Error ', error);
 		} finally {
@@ -46,7 +107,9 @@ function App() {
 					</button>
 				</div>
 			</form>
-			<div className='mockup-window my-4 w-full flex-1 overflow-y-auto border px-4 text-start'></div>
+			<div className='mockup-window my-4 w-full flex-1 overflow-y-auto border px-4 text-start'>
+				<Markdown value={aiResponse} renderer={renderer} />
+			</div>
 		</main>
 	);
 }
