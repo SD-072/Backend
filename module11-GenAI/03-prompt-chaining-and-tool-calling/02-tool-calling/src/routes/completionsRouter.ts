@@ -6,6 +6,6 @@ import { PromptBodySchema } from '#schemas';
 const completionsRouter = Router();
 completionsRouter.use(validateBodyZod(PromptBodySchema));
 
-completionsRouter.post('/tool_calling', createCompletion);
+completionsRouter.post('/tool_calling', createCompletion); // POST req: .../ai/tool_calling
 
 export default completionsRouter;

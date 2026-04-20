@@ -17,24 +17,12 @@ export const IntentSchema = z.object({
   reason: z.string().describe('Short user-facing reason for the classification'),
 });
 
-const PokemonInfoSchema = z.object({
+export const FinalResponseSchema = z.object({
   id: z.number(),
   name: z.string(),
   aboutSpecies: z.string(),
   types: z.array(z.string()),
   abilities: z.array(z.string()),
   abilitiesExplained: z.string(),
-  frontSpriteURL: z.string(),
+  frontSpriteURL: z.url().nullable(),
 });
-
-export const FinalResponseSchema = z.union([
-  z.object({
-    isPokemon: z.literal(true),
-    pokemonInfo: PokemonInfoSchema,
-    error: z.null().optional(),
-  }),
-  z.object({
-    isPokemon: z.literal(false),
-    pokemonInfo: z.null().optional(),
-  }),
-]);

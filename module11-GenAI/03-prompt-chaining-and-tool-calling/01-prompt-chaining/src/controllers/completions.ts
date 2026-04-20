@@ -1,14 +1,58 @@
 import type { RequestHandler } from 'express';
 import OpenAI from 'openai';
-import type { ChatCompletionCreateParamsNonStreaming } from 'openai/resources';
-import type { z } from 'zod';
-import type { PromptBodySchema } from '#schemas';
-import { createOpenAICompletion } from '#utils';
+import { zodResponseFormat } from 'openai/helpers/zod';
+import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources';
+import type { Pokemon } from 'pokedex-promise-v2';
+import { FinalResponseSchema } from '#schemas';
+import type { ErrorResponseDTO, FinalResponseDTO, IncomingPrompt } from '#types';
+import { getPokemon, returnError } from '#utils';
 
-type IncomingPrompt = z.infer<typeof PromptBodySchema>;
-type ResponseCompletion = { completion: string };
+const tools: ChatCompletionTool[] = [
+  {
+    type: 'function',
+    function: {
+      strict: true,
+      name: 'get_pokemon',
+      description: 'Get details for a single Pokémon by name',
+      parameters: {
+        type: 'object',
+        description: 'The name of the Pokémon to get details for',
+        properties: {
+          pokemonName: {
+            type: 'string',
+            description: 'The name of the Pokémon to get details for',
+            example: 'Pikachu',
+          },
+        },
+        required: ['pokemonName'],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      strict: true,
+      name: 'return_error',
+      description: 'Return an error when the user asks something that is NOT about Pokémon.',
+      parameters: {
+        type: 'object',
+        description: 'The reason why the question is not about Pokémon',
+        properties: {
+          message: {
+            type: 'string',
+            description: 'The reason why the question is not about Pokémon',
+            example: 'This question is not about Pokémon.',
+          },
+        },
+        required: ['message'],
+        additionalProperties: false,
+      },
+    },
+  },
+];
 
-export const createCompletion: RequestHandler<unknown, ResponseCompletion, IncomingPrompt> = async (
+export const createCompletion: RequestHandler<unknown, FinalResponseDTO, IncomingPrompt> = async (
   req,
   res,
 ) => {
@@ -20,5 +64,89 @@ export const createCompletion: RequestHandler<unknown, ResponseCompletion, Incom
     baseURL:
       process.env.NODE_ENV === 'development' ? process.env.LOCAL_LLM_URL : process.env?.AI_BASE_URL,
   });
-  res.json({ completion: 'To be implemented.' });
+
+  const model =
+    process.env.NODE_ENV === 'development' ? process.env.LOCAL_LLM_MODEL! : process.env.AI_MODEL!;
+
+  const messages: ChatCompletionMessageParam[] = [
+    {
+      role: 'system',
+      content: `You determine if a question is about Pokémon. 
+         If the user ask about a Pokémon, you will call the get_pokemon function to fetch data about it.
+         If the question is not about Pokémon, you will call the return_error function with a reason why 
+         the question is not about Pokémon.`,
+    },
+    {
+      role: 'user',
+      content: prompt,
+    },
+  ];
+
+  // * Tool Calling: Step 1 - ask the model (it may request tool calls)
+  const checkIntentCompletion = await client.chat.completions.parse({
+    model,
+    tools,
+    tool_choice: 'auto',
+    messages,
+    temperature: 0,
+  });
+
+  const checkIntentCompletionMessage = checkIntentCompletion.choices[0]?.message;
+
+  if (!checkIntentCompletionMessage) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate a response from the model.',
+    });
+    return;
+  }
+
+  // console.log(checkIntentCompletionMessage);
+
+  messages.push(checkIntentCompletionMessage);
+
+  // * Tool Calling: Step 2 — run tool calls (0..n)
+  for (const toolCall of checkIntentCompletionMessage.tool_calls || []) {
+    // console.log(toolCall);
+    if (toolCall.type === 'function') {
+      const name = toolCall.function.name;
+      const args = JSON.parse(toolCall.function.arguments);
+      console.log(`\x1b[36mTool call detected: ${name} with args: ${JSON.stringify(args)}\x1b[0m`);
+
+      let result: Pokemon | ErrorResponseDTO | string = '';
+
+      if (name === 'get_pokemon') {
+        await getPokemon({ pokemonName: args.pokemonName });
+      }
+
+      if (name === 'return_error') {
+        await returnError({ message: args.message });
+      }
+
+      messages.push({
+        role: 'tool',
+        tool_call_id: toolCall.id,
+        content: JSON.stringify(result),
+      });
+    }
+  }
+  // console.log(messages);
+
+  const finalCompletion = await client.chat.completions.parse({
+    model,
+    messages, // Contains the full history including tool results
+    temperature: 0,
+    response_format: zodResponseFormat(FinalResponseSchema, 'FinalResponse'),
+  });
+
+  const finalResponse = finalCompletion.choices[0]?.message.parsed;
+
+  if (!finalResponse) {
+    res.status(500).json({
+      completion: 'Failed to generate a final response.',
+    });
+    return;
+  }
+
+  res.json(finalResponse);
 };
