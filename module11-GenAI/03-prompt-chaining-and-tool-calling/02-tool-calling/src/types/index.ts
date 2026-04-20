@@ -1,4 +1,4 @@
-import type z from 'zod';
+import type { z } from 'zod';
 import type { FinalResponseSchema, PromptBodySchema } from '#schemas';
 
 export type IncomingPrompt = z.infer<typeof PromptBodySchema>;
@@ -11,4 +11,5 @@ export type ErrorResponseDTO = {
 export type FinalResponseDTO =
   | z.infer<typeof FinalResponseSchema>
   | ErrorResponseDTO
-  | { completion: string };
+  | { completion: string }
+  | ErrorResponseDTO;

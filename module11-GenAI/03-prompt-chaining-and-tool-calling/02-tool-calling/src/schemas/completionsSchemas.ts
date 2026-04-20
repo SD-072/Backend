@@ -8,21 +8,25 @@ export const PromptBodySchema = z.object({
   stream: z.boolean().optional().default(false),
 });
 
-export const IntentSchema = z.object({
-  isPokemon: z.boolean().describe('Whether the user is asking about one specific Pokemon'),
-  pokemonName: z
-    .string()
-    .nullable()
-    .describe('The exact Pokemon name if the prompt is about one Pokemon, otherwise null.'), // required field, value  = string | null
-  reason: z.string().describe('Short user-facing reason for the classification'),
+export const Intent = z.object({
+  isPokemon: z.boolean(),
+  type: z.string(),
+  pokemonName: z.string(),
+  reason: z.string(),
 });
 
 export const FinalResponseSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  aboutSpecies: z.string(),
-  types: z.array(z.string()),
-  abilities: z.array(z.string()),
-  abilitiesExplained: z.string(),
-  frontSpriteURL: z.url().nullable(),
+  isPokemon: z.boolean(),
+  pokemonInfo: z
+    .object({
+      id: z.number(),
+      name: z.string(),
+      aboutSpecies: z.string(),
+      types: z.array(z.string()),
+      abilities: z.array(z.string()),
+      abilitiesExplained: z.string(),
+      frontSpriteURL: z.string(),
+    })
+    .nullish(), // nullish means the property is optional, and can be null
+  error: z.string().nullish(),
 });

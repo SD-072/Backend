@@ -6,8 +6,8 @@ const app = express();
 const port = process.env.PORT || '3000';
 
 app.use(express.json());
-app.use('/ai', completionsRouter); // .../ai/messages
-app.use('/*splat', notFoundHandler);
+app.use('/ai', completionsRouter);
+app.use('*splat', notFoundHandler);
 app.use(errorHandler);
 
 app.listen(port, () =>

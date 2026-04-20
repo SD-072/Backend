@@ -6,6 +6,6 @@ import { PromptBodySchema } from '#schemas';
 const completionsRouter = Router();
 completionsRouter.use(validateBodyZod(PromptBodySchema));
 
-completionsRouter.post('/tool_calling', createCompletion);
+completionsRouter.post('/chained-prompt', createCompletion);
 
 export default completionsRouter;
