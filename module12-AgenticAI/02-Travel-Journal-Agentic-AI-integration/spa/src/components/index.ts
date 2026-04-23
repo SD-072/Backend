@@ -1,3 +1,8 @@
+export { default as ChatBtn } from './Chat/ChatBtn';
+export { default as ChatBubble } from './Chat/ChatBubble';
+export { default as ChatForm } from './Chat/ChatForm';
+export { default as ChatMessages } from './Chat/ChatMessages';
+export { default as ChatWindow } from './Chat/ChatWindow';
 export { default as DeleteModal } from './Posts/DeleteModal';
 export { default as EditModal } from './Posts/EditModal';
 export { default as PostCard } from './Posts/PostCard';

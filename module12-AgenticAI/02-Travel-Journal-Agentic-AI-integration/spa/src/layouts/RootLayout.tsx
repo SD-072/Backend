@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router';
 import { ToastContainer } from 'react-toastify';
-import { Navbar } from '@/components';
+import { ChatBtn, Navbar } from '@/components';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from '@/context';
 
@@ -11,6 +11,7 @@ const RootLayout = () => {
         <ToastContainer position='bottom-left' autoClose={1500} theme='colored' />
         <Navbar />
         <Outlet />
+        <ChatBtn />
       </div>
     </AuthProvider>
   );

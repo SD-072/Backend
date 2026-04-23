@@ -46,3 +46,29 @@ export type RegisterFormState = {
   password: string;
   confirmPassword: string;
 };
+
+export type ChatRole = 'user' | 'assistant';
+
+export type ChatMessage = {
+  _id: string;
+  role: ChatRole;
+  content: string;
+};
+
+export type ChatHistory = {
+  _id: string;
+  history: ChatMessage[];
+};
+
+export type StreamChatBody = {
+  prompt: string;
+  chatId?: string | null;
+};
+
+export type StreamChatResult = {
+  chatId: string | null;
+  completion: string;
+};
+
+export type SetChatMessages = Dispatch<SetStateAction<ChatMessage[]>>;
+export type SetChatId = Dispatch<SetStateAction<string | null>>;
