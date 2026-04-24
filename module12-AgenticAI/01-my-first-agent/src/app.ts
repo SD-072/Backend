@@ -4,10 +4,9 @@ import {
   type InputGuardrail,
   InputGuardrailTripwireTriggered,
   OpenAIChatCompletionsModel,
-  RunContext,
+  type RunContext,
   run,
   setDefaultOpenAIClient,
-  tool,
 } from '@openai/agents';
 import OpenAI from 'openai';
 import { z } from 'zod';
