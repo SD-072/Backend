@@ -22,7 +22,7 @@ pnpm-lock.yaml
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.fallow/*
+.fallow*
 .idea
 .DS_Store
 *.suo
